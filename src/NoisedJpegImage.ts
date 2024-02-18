@@ -1,41 +1,52 @@
-import { arrayBufferToBase64DataUri, flipBitInArrayBuffer } from "./buffer_utils";
-import { JPEG_MARKER_EOI, JPEG_MARKER_SOS, JPEG_MIME_TYPE } from "./constants";
+import { arrayBufferToBase64DataUri,  flipBitInArrayBuffer } from "./buffer_utils";
+import { JPEG_MIME_TYPE } from "./constants";
+import { countEscapeData, findImageDataIndex } from "./jpeg_utils";
 
 export default class NoisedJpegImage{
   imageBuffer:Uint8Array;
+  imageEscapeDataCount:number;
   imageDataIndexBegin:number=-1;
   imageDataIndexEnd:number=-1;
   constructor(imageBuffer:Uint8Array){
     this.imageBuffer=imageBuffer;
-    for(let i=0;i<imageBuffer.length-1;i++){
-      if(imageBuffer[i]===0xff){
-        const marker=imageBuffer[i+1];
-        switch(marker){
-          case JPEG_MARKER_SOS:
-            this.imageDataIndexBegin=i+2;
-            break;
-          case JPEG_MARKER_EOI:
-            this.imageDataIndexEnd=i;
-            break;
-          default:
-            // DO NOTHING
-            break;
-        }
-        // console.log("marker: " + marker.toString(16));
-      }
-    }
+
+    const {imageDataIndexBegin,imageDataIndexEnd}=findImageDataIndex(imageBuffer);
+    this.imageDataIndexBegin=imageDataIndexBegin;
+    this.imageDataIndexEnd=imageDataIndexEnd;
+    
     if(this.imageDataIndexBegin===-1){
       throw new Error("SOS not found");
     }
     if(this.imageDataIndexEnd===-1){
       throw new Error("EOI not found");
     }
+    const {escapeDataCount,escapeOtherCount}=countEscapeData(this.imageBuffer,this.imageDataIndexBegin,this.imageDataIndexEnd);
+    if(0<escapeOtherCount){
+      throw new Error("unknown escape");
+    }
+
+    this.imageEscapeDataCount=escapeDataCount;
     
   }
   async attemptAddNoiseAsync():Promise<boolean>{
     const flippedBuffer: Uint8Array = flipBitInArrayBuffer(this.imageBuffer,this.imageDataIndexBegin,this.imageDataIndexEnd);
 
+
+
     const isOk=await new Promise<boolean>((resolve)=>{
+
+      const {escapeDataCount,escapeOtherCount}=countEscapeData(flippedBuffer,this.imageDataIndexBegin,this.imageDataIndexEnd);
+      if(0<escapeOtherCount){
+        console.log("escape other count changed");
+        resolve(false);
+        return;
+      }
+      if(this.imageEscapeDataCount!==escapeDataCount){
+        console.log("escape data count changed");
+        resolve(false);
+        return;
+      }
+  
       const image=new Image();
       const base64Image=arrayBufferToBase64DataUri(flippedBuffer,JPEG_MIME_TYPE);
       image.addEventListener("load",()=>{
