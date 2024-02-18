@@ -1,7 +1,7 @@
 import type Camera from "./Camera";
 import NoisedJpegImage from "./NoisedJpegImage";
 import { blobToUint8ArrayAsync } from "./buffer_utils";
-import { ADD_NOISE_INTERVAL, CAPTURE_INTERVAL } from "./constants";
+import { ADD_NOISE_INTERVAL, CAPTURE_INTERVAL, IMAGE_QTY } from "./constants";
 
 export default class Scheduler{
   captureTimerId?:number;
@@ -63,6 +63,9 @@ export default class Scheduler{
 
     const noisedJpegImage=new NoisedJpegImage(buffer);
     this.noisedJpegImageList.push(noisedJpegImage);
+    if(IMAGE_QTY<this.noisedJpegImageList.length){
+      this.noisedJpegImageList.shift();
+    }
     this.updateBase64ImageList();
   }
 
