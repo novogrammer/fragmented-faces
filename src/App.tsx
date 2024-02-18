@@ -30,7 +30,7 @@ function App() {
     <>
       <video ref={videoElementRef} autoPlay></video>
       {
-        base64ImageList.map((base64Image,index)=>{
+        base64ImageList.reverse().map((base64Image,index)=>{
           return <img key={index} src={base64Image} />
         })
       }

@@ -1,5 +1,6 @@
 import type Camera from "./Camera";
-import { arrayBufferToBase64, blobToArrayBufferAsync, flipBitInArrayBuffer } from "./buffer_utils";
+import NoisedImage from "./NoisedImage";
+import { blobToUint8ArrayAsync } from "./buffer_utils";
 import { INTERVAL_DURATION } from "./constants";
 
 export default class Scheduler{
@@ -7,6 +8,7 @@ export default class Scheduler{
   setupPromise:Promise<void>;
   camera:Camera|null=null;
   setBase64ImageList:React.Dispatch<React.SetStateAction<string[]>>;
+  noisedImageList:NoisedImage[]=[];
   constructor(camera:Camera,setBase64ImageList:React.Dispatch<React.SetStateAction<string[]>>){
     this.camera=camera;
     this.setBase64ImageList=setBase64ImageList;
@@ -14,7 +16,9 @@ export default class Scheduler{
   }
   async setupAsync():Promise<void>{
     this.timerId=setInterval(()=>{
-      this.onInterval();
+      this.onIntervalAsync().catch((error)=>{
+        console.error(error);
+      });
     },INTERVAL_DURATION*1000);
   }
   async destroyAsync():Promise<void>{
@@ -22,28 +26,40 @@ export default class Scheduler{
     clearInterval(this.timerId);
 
   }
-  onInterval(){
-    console.log("onInterval");
-    this.captureAsync().catch((error)=>{
-      console.error(error);
-    })
+  async onIntervalAsync():Promise<void>{
+    console.log("onIntervalAsync");
+    await this.captureAsync();
+    await this.attemptAddNoiseAsync();
   }
 
-  async captureAsync(){
+  updateBase64ImageList(){
+
+    this.setBase64ImageList(()=>{
+      return this.noisedImageList.map((noisedImage)=>{
+        return noisedImage.getBase64Image();
+      })
+    })
+
+  }
+
+  async captureAsync():Promise<void>{
     if(this.camera===null){
       return;
     }
     const blob: Blob = await this.camera.captureImageAsBlobAsync();
-    const arrayBuffer: ArrayBuffer = await blobToArrayBufferAsync(blob);
+    const buffer: Uint8Array = await blobToUint8ArrayAsync(blob);
 
-    const flippedBuffer: Uint8Array = flipBitInArrayBuffer(arrayBuffer);
-  
-    const base64String: string = arrayBufferToBase64(flippedBuffer);
-    this.setBase64ImageList((base64ImageList)=>{
-      const base64Image=`data:image/jpeg;base64,${base64String}`;
-      return [base64Image,...base64ImageList];
-    })
-  
-
+    const noisedImage=new NoisedImage(buffer);
+    this.noisedImageList.push(noisedImage);
+    this.updateBase64ImageList();
   }
+
+  async attemptAddNoiseAsync():Promise<void>{
+    for(const noisedImage of this.noisedImageList){
+      await noisedImage.attemptAddNoiseAsync();
+    }
+
+    this.updateBase64ImageList();
+  }
+
 }

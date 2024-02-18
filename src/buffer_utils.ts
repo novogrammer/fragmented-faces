@@ -1,9 +1,10 @@
-export function blobToArrayBufferAsync(blob: Blob): Promise<ArrayBuffer> {
+export function blobToUint8ArrayAsync(blob: Blob): Promise<Uint8Array> {
   return new Promise((resolve, reject) => {
     const reader: FileReader = new FileReader();
     reader.onloadend = () => {
       if (reader.result) {
-        resolve(reader.result as ArrayBuffer);
+        const uint8array=new Uint8Array(reader.result as ArrayBuffer);
+        resolve(uint8array);
       } else {
         reject(new Error('FileReader did not load the file as expected.'));
       }
@@ -12,7 +13,7 @@ export function blobToArrayBufferAsync(blob: Blob): Promise<ArrayBuffer> {
   });
 }
 
-export function flipBitInArrayBuffer(arrayBuffer: ArrayBuffer): Uint8Array {
+export function flipBitInArrayBuffer(arrayBuffer: Uint8Array): Uint8Array {
   const view: Uint8Array = new Uint8Array(arrayBuffer);
   const byteIndex: number = Math.floor(Math.random() * view.length);
   const bitPosition: number = Math.floor(Math.random() * 8);
