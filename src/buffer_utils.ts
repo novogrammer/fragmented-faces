@@ -13,9 +13,15 @@ export function blobToUint8ArrayAsync(blob: Blob): Promise<Uint8Array> {
   });
 }
 
-export function flipBitInArrayBuffer(arrayBuffer: Uint8Array): Uint8Array {
+export function flipBitInArrayBuffer(arrayBuffer: Uint8Array,beginIndex:number,endIndex:number): Uint8Array {
+  if(arrayBuffer.length<endIndex){
+    throw new Error("out of range");
+  }
+  if(endIndex<=beginIndex){
+    throw new Error("invalid index");
+  }
   const view: Uint8Array = new Uint8Array(arrayBuffer);
-  const byteIndex: number = Math.floor(Math.random() * view.length);
+  const byteIndex: number = beginIndex + Math.floor(Math.random() * (endIndex - beginIndex));
   const bitPosition: number = Math.floor(Math.random() * 8);
   view[byteIndex] ^= 1 << bitPosition;
   return view;
