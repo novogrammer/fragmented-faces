@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 async function setupCameraAsync(): Promise<void> {
   const video: HTMLVideoElement = document.getElementById('video') as HTMLVideoElement;
   const stream: MediaStream = await navigator.mediaDevices.getUserMedia({
@@ -64,32 +64,37 @@ function arrayBufferToBase64(buffer: Uint8Array): string {
   return window.btoa(binary);
 }
 
-async function displayImageWithFlippedBitAsync(): Promise<void> {
-  const blob: Blob = await captureImageAsBlobAsync();
-  const arrayBuffer: ArrayBuffer = await blobToArrayBufferAsync(blob);
-  const flippedBuffer: Uint8Array = flipBitInArrayBuffer(arrayBuffer);
-  const base64String: string = arrayBufferToBase64(flippedBuffer);
-  (document.getElementById('outputImage') as HTMLImageElement).src = `data:image/jpeg;base64,${base64String}`;
-}
 
-
-
-async function mainAsync():Promise<void>{
+async function mainAsync(setBase64ImageList:React.Dispatch<React.SetStateAction<string[]>>):Promise<void>{
   await setupCameraAsync();
+  
   setTimeout(()=>{
-    displayImageWithFlippedBitAsync().catch((error)=>{
-      console.error(error);
-
+    const fooAsync=async ()=>{
+      const blob: Blob = await captureImageAsBlobAsync();
+      const arrayBuffer: ArrayBuffer = await blobToArrayBufferAsync(blob);
+  
+      const flippedBuffer: Uint8Array = flipBitInArrayBuffer(arrayBuffer);
+  
+    const base64String: string = arrayBufferToBase64(flippedBuffer);
+    setBase64ImageList((base64ImageList)=>{
+      const base64Image=`data:image/jpeg;base64,${base64String}`;
+      return [...base64ImageList,base64Image];
     })
+  
+    };
+    fooAsync().catch((error)=>{
+      console.error(error);
+    });
     
   },1000)
 }
 
 
 function App() {
+  const [base64ImageList,setBase64ImageList]=useState<string[]>([]);
 
   useEffect(()=>{
-    mainAsync().catch((error)=>{
+    mainAsync(setBase64ImageList).catch((error)=>{
       console.error(error);
     });
   },[]);
@@ -98,7 +103,11 @@ function App() {
   return (
     <>
       <video id="video" autoPlay></video>
-      <img id="outputImage" src="" />
+      {
+        base64ImageList.map((base64Image,index)=>{
+          return <img key={index} src={base64Image} />
+        })
+      }
     </>
   )
 }
