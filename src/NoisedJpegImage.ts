@@ -1,7 +1,7 @@
 import { arrayBufferToBase64DataUri, flipBitInArrayBuffer } from "./buffer_utils";
-import { IMAGE_MIME_TYPE } from "./constants";
+import { JPEG_MIME_TYPE } from "./constants";
 
-export default class NoisedImage{
+export default class NoisedJpegImage{
   imageBuffer:Uint8Array;
   constructor(imageBuffer:Uint8Array){
     this.imageBuffer=imageBuffer;
@@ -11,7 +11,7 @@ export default class NoisedImage{
 
     const isOk=await new Promise<boolean>((resolve)=>{
       const image=new Image();
-      const base64Image=arrayBufferToBase64DataUri(flippedBuffer,IMAGE_MIME_TYPE);
+      const base64Image=arrayBufferToBase64DataUri(flippedBuffer,JPEG_MIME_TYPE);
       image.addEventListener("load",()=>{
         console.log("image load");
         resolve(true);
@@ -30,7 +30,7 @@ export default class NoisedImage{
   }
 
   getBase64Image():string{
-    const base64Image=arrayBufferToBase64DataUri(this.imageBuffer,IMAGE_MIME_TYPE);
+    const base64Image=arrayBufferToBase64DataUri(this.imageBuffer,JPEG_MIME_TYPE);
     return base64Image;
 
   }

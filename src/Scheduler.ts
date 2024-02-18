@@ -1,5 +1,5 @@
 import type Camera from "./Camera";
-import NoisedImage from "./NoisedImage";
+import NoisedJpegImage from "./NoisedJpegImage";
 import { blobToUint8ArrayAsync } from "./buffer_utils";
 import { ADD_NOISE_INTERVAL, CAPTURE_INTERVAL } from "./constants";
 
@@ -9,7 +9,7 @@ export default class Scheduler{
   setupPromise:Promise<void>;
   camera:Camera|null=null;
   setBase64ImageList:React.Dispatch<React.SetStateAction<string[]>>;
-  noisedImageList:NoisedImage[]=[];
+  noisedJpegImageList:NoisedJpegImage[]=[];
   constructor(camera:Camera,setBase64ImageList:React.Dispatch<React.SetStateAction<string[]>>){
     this.camera=camera;
     this.setBase64ImageList=setBase64ImageList;
@@ -47,8 +47,8 @@ export default class Scheduler{
   updateBase64ImageList(){
 
     this.setBase64ImageList(()=>{
-      return this.noisedImageList.map((noisedImage)=>{
-        return noisedImage.getBase64Image();
+      return this.noisedJpegImageList.map((noisedJpegImage)=>{
+        return noisedJpegImage.getBase64Image();
       })
     })
 
@@ -61,14 +61,14 @@ export default class Scheduler{
     const blob: Blob = await this.camera.captureImageAsBlobAsync();
     const buffer: Uint8Array = await blobToUint8ArrayAsync(blob);
 
-    const noisedImage=new NoisedImage(buffer);
-    this.noisedImageList.push(noisedImage);
+    const noisedJpegImage=new NoisedJpegImage(buffer);
+    this.noisedJpegImageList.push(noisedJpegImage);
     this.updateBase64ImageList();
   }
 
   async attemptAddNoiseAsync():Promise<void>{
-    for(const noisedImage of this.noisedImageList){
-      await noisedImage.attemptAddNoiseAsync();
+    for(const noisedJpegImage of this.noisedJpegImageList){
+      await noisedJpegImage.attemptAddNoiseAsync();
     }
 
     this.updateBase64ImageList();

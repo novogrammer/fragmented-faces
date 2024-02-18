@@ -1,4 +1,4 @@
-import { IMAGE_MIME_TYPE } from "./constants";
+import { JPEG_MIME_TYPE } from "./constants";
 
 
 export default class Camera{
@@ -40,7 +40,7 @@ export default class Camera{
           } else {
             reject(new Error('Canvas to Blob conversion failed'));
           }
-        }, IMAGE_MIME_TYPE);
+        }, JPEG_MIME_TYPE);
       } else {
         reject(new Error('Could not get canvas context'));
       }
