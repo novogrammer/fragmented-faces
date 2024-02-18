@@ -1,10 +1,11 @@
 import type Camera from "./Camera";
 import NoisedImage from "./NoisedImage";
 import { blobToUint8ArrayAsync } from "./buffer_utils";
-import { INTERVAL_DURATION } from "./constants";
+import { ADD_NOISE_INTERVAL, CAPTURE_INTERVAL } from "./constants";
 
 export default class Scheduler{
-  timerId?:number;
+  captureTimerId?:number;
+  addNoiseTimerId?:number;
   setupPromise:Promise<void>;
   camera:Camera|null=null;
   setBase64ImageList:React.Dispatch<React.SetStateAction<string[]>>;
@@ -15,20 +16,31 @@ export default class Scheduler{
     this.setupPromise=this.setupAsync();
   }
   async setupAsync():Promise<void>{
-    this.timerId=setInterval(()=>{
-      this.onIntervalAsync().catch((error)=>{
+    this.captureTimerId=setInterval(()=>{
+      this.onIntervalCaptureAsync().catch((error)=>{
         console.error(error);
       });
-    },INTERVAL_DURATION*1000);
+    },CAPTURE_INTERVAL*1000);
+    this.addNoiseTimerId=setInterval(()=>{
+      this.onIntervalAddNoiseAsync().catch((error)=>{
+        console.error(error);
+      });
+    },ADD_NOISE_INTERVAL*1000);
+
+
   }
   async destroyAsync():Promise<void>{
     await this.setupPromise;
-    clearInterval(this.timerId);
+    clearInterval(this.captureTimerId);
+    clearInterval(this.addNoiseTimerId);
 
   }
-  async onIntervalAsync():Promise<void>{
-    console.log("onIntervalAsync");
+  async onIntervalCaptureAsync():Promise<void>{
+    console.log("onIntervalCaptureAsync");
     await this.captureAsync();
+  }
+  async onIntervalAddNoiseAsync():Promise<void>{
+    console.log("onIntervalAddNoiseAsync");
     await this.attemptAddNoiseAsync();
   }
 

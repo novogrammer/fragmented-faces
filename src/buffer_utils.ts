@@ -31,3 +31,12 @@ export function arrayBufferToBase64(buffer: Uint8Array): string {
   return window.btoa(binary);
 }
 
+
+export function arrayBufferToBase64DataUri(buffer:Uint8Array,mymeType:string){
+  const base64String: string = arrayBufferToBase64(buffer);
+
+  const base64DataUri=`data:${mymeType};base64,${base64String}`;
+  return base64DataUri;
+
+
+}
